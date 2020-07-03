@@ -3,7 +3,6 @@ import datetime
 import time
 import numpy as np
 import keras
-from keras.optimizers import SGD
 from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 import warnings
@@ -14,11 +13,11 @@ from models.lenet import LeNet
 # 添加GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '0, 1'
 warnings.filterwarnings("ignore")
-
 print('[信息打印] 数据加载......')
 x_train, y_train, x_test, y_test = load_data('mnist')
-x_train = x_train[:, :, :, np.newaxis]
-x_test = x_test[:, :, :, np.newaxis]
+if len(x_train.shape) == 3:
+    x_train = x_train[:, :, :, np.newaxis]
+    x_test = x_test[:, :, :, np.newaxis]
 class_ = np.unique(y_train)
 nb_class = len(class_)
 x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.1, random_state=42)
@@ -49,7 +48,6 @@ reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patien
 callbacks = [reduce_lr, model_checkpoint, TensorBoard]
 
 print('[信息打印] 编译模型......')
-# sgd = SGD(lr=0.0001, momentum=0.9)
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='Adam')
 print('[信息打印] 训练模型......')
 history = model.fit(x_train, y_train,
