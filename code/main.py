@@ -8,13 +8,14 @@ from sklearn.model_selection import train_test_split
 import warnings
 from utils import load_data, get_flops, create_directory, \
     save_hist, save_metrics, save_confusion
-from models.lenet import LeNet
+from models.alexnet import AlexNet
+from models.googlenet import InceptionV1
 
 # 添加GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '0, 1'
 warnings.filterwarnings("ignore")
 print('[信息打印] 数据加载......')
-x_train, y_train, x_test, y_test = load_data('mnist')
+x_train, y_train, x_test, y_test = load_data('cifar')
 if len(x_train.shape) == 3:
     x_train = x_train[:, :, :, np.newaxis]
     x_test = x_test[:, :, :, np.newaxis]
@@ -26,7 +27,7 @@ y_valid = to_categorical(y_valid)
 y_test = to_categorical(y_test)
 
 print('[信息打印] 创建模型......')
-model = LeNet(input_shape=x_train.shape[1:], classes=nb_class)
+model = InceptionV1(input_shape=x_train.shape[1:], classes=nb_class).getNet()
 model.summary()
 print('[信息打印]模型FLOPs..... ', get_flops())
 
@@ -44,9 +45,9 @@ model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=checkpoint_name, mon
 # TensorBoard构建
 TensorBoard = keras.callbacks.TensorBoard(log_dir=os.path.join(model_result_dir, 'log'))
 # 梯度平滑
-reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50, min_lr=0.0001)
+reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=0.0001)
 callbacks = [reduce_lr, model_checkpoint, TensorBoard]
-
+sgd = keras.optimizers.SGD()
 print('[信息打印] 编译模型......')
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='Adam')
 print('[信息打印] 训练模型......')
